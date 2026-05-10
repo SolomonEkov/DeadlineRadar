@@ -1,7 +1,7 @@
 import { NavigationContainer } from "@react-navigation/native";
 import AuthNavigator from "./AuthNavigator";
 import TabNavigator from "./TabNavigator";
-import { auth } from "../FirebaseConfig";
+import { auth } from "../Firestore/FirebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 

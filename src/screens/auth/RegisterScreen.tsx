@@ -10,7 +10,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../FirebaseConfig";
+import { auth } from "../../Firestore/FirebaseConfig";
 import { Formik } from "formik";
 import * as Yup from "yup";
 
