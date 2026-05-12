@@ -1,9 +1,9 @@
 import { View, Text } from "react-native";
 
-export default function Vakken() {
+export default function Tasks() {
   return (
     <View>
-      <Text>Vakken</Text>
+      <Text>Taken</Text>
     </View>
   );
 }

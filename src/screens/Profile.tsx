@@ -1,12 +1,12 @@
 import { View, Text, TouchableOpacity } from "react-native";
 
-export default function Profiel({ setIsAuthenticated }: any) {
+export default function Profile({ setIsAuthenticated }: any) {
   return (
     <View>
       <Text>Profiel</Text>
       <TouchableOpacity
         onPress={() => {
-          //Logout logica komt hier momenteel gewoon state update
+          // Logout logic is currently just a state update.
           setIsAuthenticated(false);
         }}
       >
