@@ -34,11 +34,7 @@ export default function TabNavigator({ setIsAuthenticated }: any) {
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="Vakken" component={SubjectsScreen} />
       <Tab.Screen name="Taken" component={TasksScreen} />
-      <Tab.Screen name="Profiel">
-        {(props) => (
-          <ProfileScreen {...props} setIsAuthenticated={setIsAuthenticated} />
-        )}
-      </Tab.Screen>
+      <Tab.Screen name="Profiel" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
