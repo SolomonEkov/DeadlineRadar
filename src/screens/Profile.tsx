@@ -1,13 +1,14 @@
 import { View, Text, TouchableOpacity } from "react-native";
+import { signOut } from "firebase/auth";
+import { auth } from "../Firestore/FirebaseConfig";
 
-export default function Profile({ setIsAuthenticated }: any) {
+export default function Profile() {
   return (
     <View>
       <Text>Profiel</Text>
       <TouchableOpacity
         onPress={() => {
-          // Logout logic is currently just a state update.
-          setIsAuthenticated(false);
+          signOut(auth);
         }}
       >
         <Text>Logout</Text>
