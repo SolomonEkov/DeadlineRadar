@@ -13,6 +13,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../Firestore/FirebaseConfig";
 import { Formik } from "formik";
 import * as Yup from "yup";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const registerSchema = Yup.object({
   email: Yup.string()
@@ -28,156 +29,163 @@ const registerSchema = Yup.object({
 
 export default function RegisterScreen({ navigation }: any) {
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <Formik
-          initialValues={{ email: "", password: "", confirmPassword: "" }}
-          validationSchema={registerSchema}
-          onSubmit={async (values, { setSubmitting }) => {
-            try {
-              await createUserWithEmailAndPassword(
-                auth,
-                values.email,
-                values.password,
-              );
-              navigation.navigate("Login");
-            } catch (e) {
-              console.log(e);
-              setSubmitting(false);
-            }
-          }}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
         >
-          {({
-            handleChange,
-            handleSubmit,
-            values,
-            errors,
-            touched,
-            handleBlur,
-            isSubmitting,
-          }) => (
-            <View style={styles.wrapper}>
-              <View style={styles.headerSection}>
-                <Text style={styles.mainTitle}>Deadline Radar</Text>
+          <Formik
+            initialValues={{ email: "", password: "", confirmPassword: "" }}
+            validationSchema={registerSchema}
+            onSubmit={async (values, { setSubmitting }) => {
+              try {
+                await createUserWithEmailAndPassword(
+                  auth,
+                  values.email,
+                  values.password,
+                );
+                navigation.navigate("Login");
+              } catch (e) {
+                console.log(e);
+                setSubmitting(false);
+              }
+            }}
+          >
+            {({
+              handleChange,
+              handleSubmit,
+              values,
+              errors,
+              touched,
+              handleBlur,
+              isSubmitting,
+            }) => (
+              <View style={styles.wrapper}>
+                <View style={styles.headerSection}>
+                  <Text style={styles.mainTitle}>Deadline Radar</Text>
 
-                <Text style={styles.tagline}>
-                  Maak een account aan om te starten
-                </Text>
-              </View>
-
-              <View style={styles.formSection}>
-                <Text style={styles.formTitle}>Registreren</Text>
-
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.label}>E-mailadres</Text>
-
-                  <TextInput
-                    placeholder="Email"
-                    placeholderTextColor="#CBD5E1"
-                    value={values.email}
-                    onChangeText={handleChange("email")}
-                    onBlur={handleBlur("email")}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    editable={!isSubmitting}
-                    style={[
-                      styles.input,
-                      touched.email && errors.email && styles.inputError,
-                    ]}
-                  />
-
-                  {touched.email && errors.email ? (
-                    <Text style={styles.errorText}>{errors.email}</Text>
-                  ) : null}
-                </View>
-
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.label}>Wachtwoord</Text>
-
-                  <TextInput
-                    placeholder="Password"
-                    placeholderTextColor="#CBD5E1"
-                    value={values.password}
-                    secureTextEntry
-                    onChangeText={handleChange("password")}
-                    onBlur={handleBlur("password")}
-                    editable={!isSubmitting}
-                    style={[
-                      styles.input,
-                      touched.password && errors.password && styles.inputError,
-                    ]}
-                  />
-
-                  {touched.password && errors.password ? (
-                    <Text style={styles.errorText}>{errors.password}</Text>
-                  ) : null}
-                </View>
-
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.label}>Bevestig wachtwoord</Text>
-
-                  <TextInput
-                    placeholder="••••••••"
-                    placeholderTextColor="#CBD5E1"
-                    value={values.confirmPassword}
-                    secureTextEntry
-                    onChangeText={handleChange("confirmPassword")}
-                    onBlur={handleBlur("confirmPassword")}
-                    editable={!isSubmitting}
-                    style={[
-                      styles.input,
-                      touched.confirmPassword &&
-                        errors.confirmPassword &&
-                        styles.inputError,
-                    ]}
-                  />
-
-                  {touched.confirmPassword && errors.confirmPassword ? (
-                    <Text style={styles.errorText}>
-                      {errors.confirmPassword}
-                    </Text>
-                  ) : null}
-                </View>
-
-                <TouchableOpacity
-                  style={[styles.button, isSubmitting && styles.buttonDisabled]}
-                  onPress={() => handleSubmit()}
-                  disabled={isSubmitting}
-                  activeOpacity={0.8}
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.buttonText}>Account aanmaken</Text>
-                  )}
-                </TouchableOpacity>
-
-                <View style={styles.divider} />
-
-                <TouchableOpacity
-                  style={styles.registerLink}
-                  onPress={() => navigation.navigate("Login")}
-                  disabled={isSubmitting}
-                >
-                  <Text style={styles.registerText}>
-                    Heb je al een account?{" "}
-                    <Text style={styles.registerLinkText}>Inloggen</Text>
+                  <Text style={styles.tagline}>
+                    Maak een account aan om te starten
                   </Text>
-                </TouchableOpacity>
+                </View>
+
+                <View style={styles.formSection}>
+                  <Text style={styles.formTitle}>Registreren</Text>
+
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.label}>E-mailadres</Text>
+
+                    <TextInput
+                      placeholder="Email"
+                      placeholderTextColor="#CBD5E1"
+                      value={values.email}
+                      onChangeText={handleChange("email")}
+                      onBlur={handleBlur("email")}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      editable={!isSubmitting}
+                      style={[
+                        styles.input,
+                        touched.email && errors.email && styles.inputError,
+                      ]}
+                    />
+
+                    {touched.email && errors.email ? (
+                      <Text style={styles.errorText}>{errors.email}</Text>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.label}>Wachtwoord</Text>
+
+                    <TextInput
+                      placeholder="Password"
+                      placeholderTextColor="#CBD5E1"
+                      value={values.password}
+                      secureTextEntry
+                      onChangeText={handleChange("password")}
+                      onBlur={handleBlur("password")}
+                      editable={!isSubmitting}
+                      style={[
+                        styles.input,
+                        touched.password &&
+                          errors.password &&
+                          styles.inputError,
+                      ]}
+                    />
+
+                    {touched.password && errors.password ? (
+                      <Text style={styles.errorText}>{errors.password}</Text>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.label}>Bevestig wachtwoord</Text>
+
+                    <TextInput
+                      placeholder="••••••••"
+                      placeholderTextColor="#CBD5E1"
+                      value={values.confirmPassword}
+                      secureTextEntry
+                      onChangeText={handleChange("confirmPassword")}
+                      onBlur={handleBlur("confirmPassword")}
+                      editable={!isSubmitting}
+                      style={[
+                        styles.input,
+                        touched.confirmPassword &&
+                          errors.confirmPassword &&
+                          styles.inputError,
+                      ]}
+                    />
+
+                    {touched.confirmPassword && errors.confirmPassword ? (
+                      <Text style={styles.errorText}>
+                        {errors.confirmPassword}
+                      </Text>
+                    ) : null}
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      isSubmitting && styles.buttonDisabled,
+                    ]}
+                    onPress={() => handleSubmit()}
+                    disabled={isSubmitting}
+                    activeOpacity={0.8}
+                  >
+                    {isSubmitting ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.buttonText}>Account aanmaken</Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <View style={styles.divider} />
+
+                  <TouchableOpacity
+                    style={styles.registerLink}
+                    onPress={() => navigation.navigate("Login")}
+                    disabled={isSubmitting}
+                  >
+                    <Text style={styles.registerText}>
+                      Heb je al een account?{" "}
+                      <Text style={styles.registerLinkText}>Inloggen</Text>
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          )}
-        </Formik>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            )}
+          </Formik>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

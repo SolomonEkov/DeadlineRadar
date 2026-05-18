@@ -7,7 +7,7 @@ import {
   FlatList,
 } from "react-native";
 import { Modal, Pressable, KeyboardAvoidingView, Platform } from "react-native";
-// Note: using simple Modal fallback for Expo Go compatibility.
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   addDoc,
   collection,
@@ -97,7 +97,7 @@ export default function Subjects() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Vakken</Text>
         <TouchableOpacity
@@ -230,7 +230,7 @@ export default function Subjects() {
           </Formik>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 

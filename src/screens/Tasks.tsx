@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import {
@@ -185,7 +186,7 @@ export default function Tasks() {
       : deadlineDate || deadlineTime || "Kies een datum en uur";
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Taken</Text>
         <Pressable style={styles.primaryButton} onPress={openAddModal}>
@@ -412,7 +413,7 @@ export default function Tasks() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -13,6 +13,7 @@ import { auth } from "../../Firestore/FirebaseConfig";
 import { StyleSheet } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const loginSchema = Yup.object({
   email: Yup.string()
@@ -25,125 +26,132 @@ const loginSchema = Yup.object({
 
 export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        keyboardDismissMode="on-drag"
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <Formik
-          initialValues={{ email: "", password: "" }}
-          validationSchema={loginSchema}
-          onSubmit={async (values, { setSubmitting }) => {
-            try {
-              await signInWithEmailAndPassword(
-                auth,
-                values.email,
-                values.password,
-              );
-              setIsAuthenticated(true);
-            } catch (e: any) {
-              console.log("Login error:", e);
-              setSubmitting(false);
-            }
-          }}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
         >
-          {({
-            handleChange,
-            handleSubmit,
-            values,
-            errors,
-            touched,
-            handleBlur,
-            isSubmitting,
-          }) => (
-            <View style={styles.wrapper}>
-              <View style={styles.headerSection}>
-                <Text style={styles.mainTitle}>Deadline Radar</Text>
-                <Text style={styles.tagline}>
-                  Beheer je deadlines met gemak
-                </Text>
-              </View>
-
-              <View style={styles.formSection}>
-                <Text style={styles.formTitle}>Welkom terug</Text>
-
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.label}>E-mailadres</Text>
-                  <TextInput
-                    placeholder="Email"
-                    placeholderTextColor="#CBD5E1"
-                    value={values.email}
-                    onChangeText={handleChange("email")}
-                    onBlur={handleBlur("email")}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    editable={!isSubmitting}
-                    style={[
-                      styles.input,
-                      touched.email && errors.email && styles.inputError,
-                    ]}
-                  />
-                  {touched.email && errors.email ? (
-                    <Text style={styles.errorText}>{errors.email}</Text>
-                  ) : null}
-                </View>
-
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.label}>Wachtwoord</Text>
-                  <TextInput
-                    placeholder="Password"
-                    placeholderTextColor="#CBD5E1"
-                    value={values.password}
-                    onChangeText={handleChange("password")}
-                    onBlur={handleBlur("password")}
-                    secureTextEntry
-                    editable={!isSubmitting}
-                    style={[
-                      styles.input,
-                      touched.password && errors.password && styles.inputError,
-                    ]}
-                  />
-                  {touched.password && errors.password ? (
-                    <Text style={styles.errorText}>{errors.password}</Text>
-                  ) : null}
-                </View>
-
-                <TouchableOpacity
-                  style={[styles.button, isSubmitting && styles.buttonDisabled]}
-                  onPress={() => handleSubmit()}
-                  disabled={isSubmitting}
-                  activeOpacity={0.8}
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.buttonText}>Inloggen</Text>
-                  )}
-                </TouchableOpacity>
-
-                <View style={styles.divider} />
-
-                <TouchableOpacity
-                  style={styles.registerLink}
-                  onPress={() => navigation.navigate("Register")}
-                  disabled={isSubmitting}
-                >
-                  <Text style={styles.registerText}>
-                    Nog geen account?{" "}
-                    <Text style={styles.registerLinkText}>Registreren</Text>
+          <Formik
+            initialValues={{ email: "", password: "" }}
+            validationSchema={loginSchema}
+            onSubmit={async (values, { setSubmitting }) => {
+              try {
+                await signInWithEmailAndPassword(
+                  auth,
+                  values.email,
+                  values.password,
+                );
+                setIsAuthenticated(true);
+              } catch (e: any) {
+                console.log("Login error:", e);
+                setSubmitting(false);
+              }
+            }}
+          >
+            {({
+              handleChange,
+              handleSubmit,
+              values,
+              errors,
+              touched,
+              handleBlur,
+              isSubmitting,
+            }) => (
+              <View style={styles.wrapper}>
+                <View style={styles.headerSection}>
+                  <Text style={styles.mainTitle}>Deadline Radar</Text>
+                  <Text style={styles.tagline}>
+                    Beheer je deadlines met gemak
                   </Text>
-                </TouchableOpacity>
+                </View>
+
+                <View style={styles.formSection}>
+                  <Text style={styles.formTitle}>Welkom terug</Text>
+
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.label}>E-mailadres</Text>
+                    <TextInput
+                      placeholder="Email"
+                      placeholderTextColor="#CBD5E1"
+                      value={values.email}
+                      onChangeText={handleChange("email")}
+                      onBlur={handleBlur("email")}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      editable={!isSubmitting}
+                      style={[
+                        styles.input,
+                        touched.email && errors.email && styles.inputError,
+                      ]}
+                    />
+                    {touched.email && errors.email ? (
+                      <Text style={styles.errorText}>{errors.email}</Text>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.label}>Wachtwoord</Text>
+                    <TextInput
+                      placeholder="Password"
+                      placeholderTextColor="#CBD5E1"
+                      value={values.password}
+                      onChangeText={handleChange("password")}
+                      onBlur={handleBlur("password")}
+                      secureTextEntry
+                      editable={!isSubmitting}
+                      style={[
+                        styles.input,
+                        touched.password &&
+                          errors.password &&
+                          styles.inputError,
+                      ]}
+                    />
+                    {touched.password && errors.password ? (
+                      <Text style={styles.errorText}>{errors.password}</Text>
+                    ) : null}
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      isSubmitting && styles.buttonDisabled,
+                    ]}
+                    onPress={() => handleSubmit()}
+                    disabled={isSubmitting}
+                    activeOpacity={0.8}
+                  >
+                    {isSubmitting ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.buttonText}>Inloggen</Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <View style={styles.divider} />
+
+                  <TouchableOpacity
+                    style={styles.registerLink}
+                    onPress={() => navigation.navigate("Register")}
+                    disabled={isSubmitting}
+                  >
+                    <Text style={styles.registerText}>
+                      Nog geen account?{" "}
+                      <Text style={styles.registerLinkText}>Registreren</Text>
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          )}
-        </Formik>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            )}
+          </Formik>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

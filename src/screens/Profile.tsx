@@ -1,10 +1,11 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { signOut } from "firebase/auth";
 import { auth } from "../Firestore/FirebaseConfig";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Profile() {
   return (
-    <View>
+    <SafeAreaView>
       <Text>Profiel</Text>
       <TouchableOpacity
         onPress={() => {
@@ -13,6 +14,6 @@ export default function Profile() {
       >
         <Text>Logout</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
