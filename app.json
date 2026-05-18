@@ -18,8 +18,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "predictiveBackGestureEnabled": false
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,17 +36,7 @@
           "imageWidth": 200
         }
       ],
-      [
-        "expo-font",
-        {
-          "fonts": [
-            "./assets/fonts/Raleway-Regular.ttf",
-            "./assets/fonts/Raleway-Bold.ttf",
-            "./assets/fonts/Raleway-Medium.ttf",
-            "./assets/fonts/Raleway-Light.ttf"
-          ]
-        }
-      ]
+      "expo-font"
     ]
   }
 }

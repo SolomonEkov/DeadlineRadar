@@ -20,6 +20,7 @@ export default function TabNavigator({ setIsAuthenticated }: any) {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        headerShown: false,
         tabBarIcon: ({ color, size, focused }) => {
           const [active, inactive] = tabIcons[route.name] ?? [
             "home",

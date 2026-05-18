@@ -1,18 +1,18 @@
 export interface Subject {
   id: string;
   name: string;
-  color: string;
   userId: string;
-  createdAt: Date;
+  color?: string;
+  createdAt?: Date;
 }
 
 export interface Task {
   id: string;
   title: string;
-  description?: string;
-  deadline: Date;
   subjectId: string;
-  completed: boolean;
   userId: string;
-  createdAt: Date;
+  description?: string;
+  deadline?: Date;
+  completed?: boolean;
+  createdAt?: Date;
 }

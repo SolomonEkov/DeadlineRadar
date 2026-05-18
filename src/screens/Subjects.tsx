@@ -6,6 +6,8 @@ import {
   StyleSheet,
   FlatList,
 } from "react-native";
+import { Modal, Pressable, KeyboardAvoidingView, Platform } from "react-native";
+// Note: using simple Modal fallback for Expo Go compatibility.
 import {
   addDoc,
   collection,
@@ -22,7 +24,7 @@ import {
 import { db, auth } from "../Firestore/FirebaseConfig";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Subject } from "../types";
 
 const subjectSchema = Yup.object({
@@ -44,6 +46,7 @@ export default function Subjects() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [editText, setEditText] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const handleAddSubject = async (name: string) => {
     if (!name.trim()) return;
     if (!auth.currentUser) return;
@@ -95,44 +98,15 @@ export default function Subjects() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Vak toevoegen</Text>
-
-      <Formik
-        initialValues={{ name: "" }}
-        validationSchema={subjectSchema}
-        onSubmit={async (values, { resetForm }) => {
-          await handleAddSubject(values.name);
-          resetForm();
-        }}
-      >
-        {({
-          handleChange,
-          handleBlur,
-          handleSubmit,
-          values,
-          errors,
-          touched,
-        }) => (
-          <>
-            <TextInput
-              placeholder="Vak naam"
-              value={values.name}
-              onChangeText={handleChange("name")}
-              onBlur={handleBlur("name")}
-              style={styles.input}
-            />
-
-            {touched.name && errors.name ? <Text>{errors.name}</Text> : null}
-
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => handleSubmit()}
-            >
-              <Text style={styles.buttonText}>Toevoegen</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </Formik>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Vakken</Text>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => setIsModalOpen(true)}
+        >
+          <Text style={styles.primaryButtonText}>Vak toevoegen</Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={subjects}
@@ -187,6 +161,75 @@ export default function Subjects() {
           );
         }}
       />
+
+      <Modal
+        visible={isModalOpen}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setIsModalOpen(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setIsModalOpen(false)}
+        />
+        <KeyboardAvoidingView
+          style={styles.modalSheet}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <View style={styles.modalHandle} />
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Nieuw vak</Text>
+            <TouchableOpacity
+              style={styles.modalClose}
+              onPress={() => setIsModalOpen(false)}
+            >
+              <Text style={styles.modalCloseText}>Sluiten</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Formik
+            initialValues={{ name: "" }}
+            validationSchema={subjectSchema}
+            onSubmit={async (values, { resetForm }) => {
+              await handleAddSubject(values.name);
+              resetForm();
+              setIsModalOpen(false);
+            }}
+          >
+            {({
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              values,
+              errors,
+              touched,
+            }) => (
+              <>
+                <Text style={styles.inputLabel}>Vaknaam</Text>
+                <TextInput
+                  placeholder="Bijvoorbeeld: Web 3"
+                  placeholderTextColor="#94A3B8"
+                  value={values.name}
+                  onChangeText={handleChange("name")}
+                  onBlur={handleBlur("name")}
+                  style={styles.input}
+                />
+
+                {touched.name && errors.name ? (
+                  <Text style={styles.errorText}>{errors.name}</Text>
+                ) : null}
+
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => handleSubmit()}
+                >
+                  <Text style={styles.buttonText}>Toevoegen</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </Formik>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -194,60 +237,166 @@ export default function Subjects() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     padding: 24,
-    backgroundColor: "#fff",
+    backgroundColor: "#F8FAFC",
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 24,
+    gap: 12,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 20,
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#0F172A",
+    letterSpacing: -0.6,
+    alignSelf: "flex-start",
   },
   input: {
     width: "100%",
-    maxWidth: 300,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    maxWidth: 340,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginBottom: 14,
+    fontSize: 15,
+    color: "#0F172A",
   },
   button: {
     backgroundColor: "#2563EB",
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: 14,
+    minWidth: 160,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#2563EB",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    elevation: 5,
+    marginBottom: 24,
   },
   buttonText: {
-    color: "#fff",
-    fontWeight: "600",
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 15,
+    letterSpacing: 0.2,
+  },
+  primaryButton: {
+    backgroundColor: "#0F172A",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+  },
+  primaryButtonText: {
+    color: "#F8FAFC",
+    fontWeight: "700",
+    fontSize: 12,
+    letterSpacing: 0.2,
   },
   item: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-evenly",
     width: "100%",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginTop: 8,
-    marginBottom: 8,
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
   deleteButton: {
-    backgroundColor: "transparent",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 999,
+    backgroundColor: "#F8FAFC",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "#E2E8F0",
+    marginLeft: 8,
   },
   deleteButtonText: {
-    color: "#6B7280",
-    fontWeight: "500",
+    color: "#475569",
+    fontWeight: "600",
+    fontSize: 13,
+  },
+  sheetContent: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  modalHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#CBD5F5",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(2,6,23,0.5)",
+  },
+  modalSheet: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: "90%",
+    backgroundColor: "#F8FAFC",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  modalClose: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: "#E2E8F0",
+  },
+  modalCloseText: {
+    color: "#0F172A",
+    fontWeight: "700",
     fontSize: 12,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#334155",
+    marginBottom: 8,
+  },
+  errorText: {
+    color: "#DC2626",
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 12,
   },
 });
