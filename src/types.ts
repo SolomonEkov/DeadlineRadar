@@ -11,8 +11,7 @@ export interface Task {
   title: string;
   subjectId: string;
   userId: string;
-  description?: string;
-  deadline?: Date;
+  deadline?: string;
   completed?: boolean;
   createdAt?: Date;
 }

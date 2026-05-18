@@ -2,12 +2,16 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Alert,
   StyleSheet,
   FlatList,
+  Modal,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import { Modal, Pressable, KeyboardAvoidingView, Platform } from "react-native";
 import { useEffect, useState } from "react";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   addDoc,
   collection,
@@ -15,24 +19,26 @@ import {
   doc,
   onSnapshot,
   query,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import { auth, db } from "../Firestore/FirebaseConfig";
-import { Subject } from "../types";
-
-type TaskItem = {
-  id: string;
-  title: string;
-  subjectId: string;
-  userId: string;
-};
+import { Subject, Task } from "../types";
 
 export default function Tasks() {
-  const [task, setTask] = useState("");
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [deadlineDate, setDeadlineDate] = useState("");
+  const [deadlineTime, setDeadlineTime] = useState("");
+  const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
+  const [deadlinePickerMode, setDeadlinePickerMode] = useState<"date" | "time">(
+    "date",
+  );
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -56,7 +62,7 @@ export default function Tasks() {
     });
 
     return () => unsubscribeSubjects();
-  }, [selectedSubjectId]);
+  }, []);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -70,7 +76,7 @@ export default function Tasks() {
       const taskList = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as TaskItem[];
+      })) as Task[];
 
       setTasks(taskList);
     });
@@ -78,42 +84,113 @@ export default function Tasks() {
     return () => unsubscribeTasks();
   }, []);
 
-  const handleAddTask = async () => {
-    if (!task.trim()) return;
+  const resetForm = () => {
+    setTaskTitle("");
+    setDeadlineDate("");
+    setDeadlineTime("");
+    setShowDeadlinePicker(false);
+    setIsCompleted(false);
+    setEditingTaskId(null);
+  };
+
+  const openAddModal = () => {
+    resetForm();
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (taskItem: Task) => {
+    setEditingTaskId(taskItem.id);
+    setTaskTitle(taskItem.title);
+    const [storedDate = "", storedTime = ""] = (taskItem.deadline || "")
+      .split(" ")
+      .slice(0, 2);
+
+    setDeadlineDate(storedDate);
+    setDeadlineTime(storedTime);
+    setIsCompleted(Boolean(taskItem.completed));
+    setSelectedSubjectId(taskItem.subjectId);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveTask = async () => {
+    if (!taskTitle.trim()) return;
     if (!auth.currentUser) return;
     if (!selectedSubjectId) return;
 
     try {
-      await addDoc(collection(db, "tasks"), {
-        title: task,
+      const taskData = {
+        title: taskTitle,
         subjectId: selectedSubjectId,
         userId: auth.currentUser.uid,
-      });
+        deadline:
+          deadlineDate && deadlineTime
+            ? `${deadlineDate} ${deadlineTime}`
+            : deadlineDate || "",
+        completed: isCompleted,
+      };
 
-      setTask("");
+      if (editingTaskId) {
+        await updateDoc(doc(db, "tasks", editingTaskId), taskData);
+      } else {
+        await addDoc(collection(db, "tasks"), taskData);
+      }
+
+      resetForm();
     } catch (error) {
       console.error("Fout bij toevoegen taak:", error);
     }
   };
 
-  const handleDeleteTask = async (id: string) => {
+  const handleDeleteCurrentTask = async () => {
+    if (!editingTaskId) return;
+
     try {
-      await deleteDoc(doc(db, "tasks", id));
+      await deleteDoc(doc(db, "tasks", editingTaskId));
+      setIsModalOpen(false);
+      resetForm();
     } catch (error) {
       console.error("Fout bij verwijderen taak:", error);
     }
   };
 
+  const handleToggleCompleted = () => {
+    setIsCompleted((currentValue) => !currentValue);
+  };
+
+  const parseDeadlinePickerValue = () => {
+    const sourceValue =
+      deadlinePickerMode === "date"
+        ? deadlineDate
+        : deadlineDate && deadlineTime
+          ? `${deadlineDate}T${deadlineTime}:00`
+          : "";
+
+    const parsedDate = sourceValue ? new Date(sourceValue) : new Date();
+
+    return Number.isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+  };
+
+  const formatDeadlineDate = (date: Date) => date.toISOString().slice(0, 10);
+
+  const formatDeadlineTime = (date: Date) => date.toTimeString().slice(0, 5);
+
+  const openDeadlinePicker = (mode: "date" | "time") => {
+    setDeadlinePickerMode(mode);
+    setShowDeadlinePicker(true);
+  };
+
+  const deadlinePreview =
+    deadlineDate && deadlineTime
+      ? `${deadlineDate} ${deadlineTime}`
+      : deadlineDate || deadlineTime || "Kies een datum en uur";
+
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Taken</Text>
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => setIsModalOpen(true)}
-        >
+        <Pressable style={styles.primaryButton} onPress={openAddModal}>
           <Text style={styles.primaryButtonText}>Taak toevoegen</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <FlatList
@@ -125,21 +202,26 @@ export default function Tasks() {
           const subject = subjects.find((s) => s.id === item.subjectId);
 
           return (
-            <View style={styles.item}>
+            <Pressable style={styles.item} onPress={() => openEditModal(item)}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.taskTitle}>{item.title}</Text>
+                <Text
+                  style={[
+                    styles.taskTitle,
+                    item.completed && styles.taskTitleCompleted,
+                  ]}
+                >
+                  {item.title}
+                </Text>
                 <Text style={styles.taskSubject}>
                   {subject?.name || "Geen vak"}
                 </Text>
+                {item.deadline ? (
+                  <Text style={styles.taskDeadline}>
+                    Deadline: {item.deadline}
+                  </Text>
+                ) : null}
               </View>
-
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeleteTask(item.id)}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
+            </Pressable>
           );
         }}
         ListEmptyComponent={
@@ -163,23 +245,105 @@ export default function Tasks() {
         >
           <View style={styles.modalHandle} />
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Nieuwe taak</Text>
-            <TouchableOpacity
+            <Text style={styles.modalTitle}>
+              {editingTaskId ? "Taak bewerken" : "Nieuwe taak"}
+            </Text>
+            <Pressable
               style={styles.modalClose}
-              onPress={() => setIsModalOpen(false)}
+              onPress={() => {
+                setIsModalOpen(false);
+                resetForm();
+              }}
             >
               <Text style={styles.modalCloseText}>Sluiten</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <Text style={styles.inputLabel}>Taak</Text>
           <TextInput
             placeholder="Bijvoorbeeld: Deadline indienen"
             placeholderTextColor="#94A3B8"
-            value={task}
-            onChangeText={setTask}
+            value={taskTitle}
+            onChangeText={setTaskTitle}
             style={styles.input}
           />
+
+          <Text style={styles.inputLabel}>Deadline</Text>
+          <View style={styles.deadlineButtonsRow}>
+            <Pressable
+              style={styles.dateButton}
+              onPress={() => openDeadlinePicker("date")}
+            >
+              <Text style={styles.dateButtonLabel}>Datum</Text>
+              <Text style={styles.dateButtonText}>
+                {deadlineDate || "Kies datum"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.dateButton}
+              onPress={() => openDeadlinePicker("time")}
+            >
+              <Text style={styles.dateButtonLabel}>Uur</Text>
+              <Text style={styles.dateButtonText}>
+                {deadlineTime || "Kies uur"}
+              </Text>
+            </Pressable>
+          </View>
+
+          <Text style={styles.deadlinePreview}>{deadlinePreview}</Text>
+
+          {showDeadlinePicker ? (
+            <View style={styles.pickerWrap}>
+              <DateTimePicker
+                value={parseDeadlinePickerValue()}
+                mode={deadlinePickerMode}
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(_, selectedDate) => {
+                  if (selectedDate) {
+                    if (deadlinePickerMode === "date") {
+                      setDeadlineDate(formatDeadlineDate(selectedDate));
+                    } else {
+                      setDeadlineTime(formatDeadlineTime(selectedDate));
+                    }
+                  }
+
+                  if (Platform.OS !== "ios") {
+                    setShowDeadlinePicker(false);
+                  }
+                }}
+              />
+
+              {Platform.OS === "ios" ? (
+                <Pressable
+                  style={styles.pickerDoneButton}
+                  onPress={() => setShowDeadlinePicker(false)}
+                >
+                  <Text style={styles.pickerDoneButtonText}>Klaar</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
+
+          <View style={styles.toggleRow}>
+            <Text style={styles.toggleLabel}>Afgewerkt</Text>
+            <Pressable
+              style={[
+                styles.toggleChip,
+                isCompleted && styles.toggleChipActive,
+              ]}
+              onPress={handleToggleCompleted}
+            >
+              <Text
+                style={[
+                  styles.toggleChipText,
+                  isCompleted && styles.toggleChipTextActive,
+                ]}
+              >
+                {isCompleted ? "Ja" : "Nee"}
+              </Text>
+            </Pressable>
+          </View>
 
           <Text style={styles.label}>Kies een vak</Text>
 
@@ -188,7 +352,7 @@ export default function Tasks() {
               const isSelected = selectedSubjectId === subject.id;
 
               return (
-                <TouchableOpacity
+                <Pressable
                   key={subject.id}
                   style={[
                     styles.subjectButton,
@@ -204,20 +368,46 @@ export default function Tasks() {
                   >
                     {subject.name}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </View>
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={async () => {
-              await handleAddTask();
-              setIsModalOpen(false);
-            }}
-          >
-            <Text style={styles.buttonText}>Toevoegen</Text>
-          </TouchableOpacity>
+          <View style={styles.actionRow}>
+            <Pressable
+              style={styles.inlineSaveButton}
+              onPress={async () => {
+                await handleSaveTask();
+                setIsModalOpen(false);
+              }}
+            >
+              <Text style={styles.buttonText}>
+                {editingTaskId ? "Opslaan" : "Toevoegen"}
+              </Text>
+            </Pressable>
+
+            {editingTaskId ? (
+              <Pressable
+                style={styles.inlineDeleteButton}
+                onPress={() =>
+                  Alert.alert(
+                    "Bevestigen",
+                    "Weet je zeker dat je deze taak wilt verwijderen?",
+                    [
+                      { text: "Annuleren", style: "cancel" },
+                      {
+                        text: "Verwijderen",
+                        style: "destructive",
+                        onPress: handleDeleteCurrentTask,
+                      },
+                    ],
+                  )
+                }
+              >
+                <Text style={styles.deleteModalButtonText}>Verwijderen</Text>
+              </Pressable>
+            ) : null}
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </View>
@@ -255,6 +445,37 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 15,
     color: "#0F172A",
+  },
+  deadlineButtonsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  dateButton: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginBottom: 16,
+  },
+  dateButtonLabel: {
+    color: "#64748B",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  dateButtonText: {
+    color: "#0F172A",
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  deadlinePreview: {
+    color: "#334155",
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 14,
   },
   label: {
     fontSize: 14,
@@ -355,19 +576,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "500",
   },
-  deleteButton: {
-    backgroundColor: "#FEF2F2",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#FECACA",
-    marginLeft: 8,
-  },
-  deleteButtonText: {
-    color: "#DC2626",
+  taskDeadline: {
+    color: "#334155",
+    fontSize: 12,
     fontWeight: "600",
-    fontSize: 13,
+    marginTop: 4,
+  },
+  taskTitleCompleted: {
+    textDecorationLine: "line-through",
+    color: "#94A3B8",
   },
   sheetContent: {
     paddingHorizontal: 24,
@@ -425,6 +642,100 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#334155",
     marginBottom: 8,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 18,
+  },
+  toggleLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#334155",
+  },
+  toggleChip: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+  },
+  toggleChipActive: {
+    backgroundColor: "#DCFCE7",
+    borderColor: "#86EFAC",
+  },
+  toggleChipText: {
+    color: "#475569",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  toggleChipTextActive: {
+    color: "#166534",
+  },
+  pickerWrap: {
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    overflow: "hidden",
+  },
+  pickerDoneButton: {
+    paddingVertical: 12,
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+  },
+  pickerDoneButtonText: {
+    color: "#1D4ED8",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  deleteModalButton: {
+    marginTop: 12,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  deleteModalButtonText: {
+    color: "#DC2626",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  actionRow: {
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 12,
+  },
+  inlineSaveButton: {
+    flex: 1,
+    backgroundColor: "#2563EB",
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  inlineDeleteButton: {
+    flex: 1,
+    marginLeft: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
   },
   emptyText: {
     marginTop: 12,
