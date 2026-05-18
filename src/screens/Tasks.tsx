@@ -244,169 +244,171 @@ export default function Tasks() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <View style={styles.modalHandle} />
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingTaskId ? "Taak bewerken" : "Nieuwe taak"}
-            </Text>
-            <Pressable
-              style={styles.modalClose}
-              onPress={() => {
-                setIsModalOpen(false);
-                resetForm();
-              }}
-            >
-              <Text style={styles.modalCloseText}>Sluiten</Text>
-            </Pressable>
-          </View>
-
-          <Text style={styles.inputLabel}>Taak</Text>
-          <TextInput
-            placeholder="Bijvoorbeeld: Deadline indienen"
-            placeholderTextColor="#94A3B8"
-            value={taskTitle}
-            onChangeText={setTaskTitle}
-            style={styles.input}
-          />
-
-          <Text style={styles.inputLabel}>Deadline</Text>
-          <View style={styles.deadlineButtonsRow}>
-            <Pressable
-              style={styles.dateButton}
-              onPress={() => openDeadlinePicker("date")}
-            >
-              <Text style={styles.dateButtonLabel}>Datum</Text>
-              <Text style={styles.dateButtonText}>
-                {deadlineDate || "Kies datum"}
+          <View style={styles.sheetContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingTaskId ? "Taak bewerken" : "Nieuwe taak"}
               </Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.dateButton}
-              onPress={() => openDeadlinePicker("time")}
-            >
-              <Text style={styles.dateButtonLabel}>Uur</Text>
-              <Text style={styles.dateButtonText}>
-                {deadlineTime || "Kies uur"}
-              </Text>
-            </Pressable>
-          </View>
-
-          <Text style={styles.deadlinePreview}>{deadlinePreview}</Text>
-
-          {showDeadlinePicker ? (
-            <View style={styles.pickerWrap}>
-              <DateTimePicker
-                value={parseDeadlinePickerValue()}
-                mode={deadlinePickerMode}
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={(_, selectedDate) => {
-                  if (selectedDate) {
-                    if (deadlinePickerMode === "date") {
-                      setDeadlineDate(formatDeadlineDate(selectedDate));
-                    } else {
-                      setDeadlineTime(formatDeadlineTime(selectedDate));
-                    }
-                  }
-
-                  if (Platform.OS !== "ios") {
-                    setShowDeadlinePicker(false);
-                  }
+              <Pressable
+                style={styles.modalClose}
+                onPress={() => {
+                  setIsModalOpen(false);
+                  resetForm();
                 }}
-              />
+              >
+                <Text style={styles.modalCloseText}>Sluiten</Text>
+              </Pressable>
+            </View>
 
-              {Platform.OS === "ios" ? (
-                <Pressable
-                  style={styles.pickerDoneButton}
-                  onPress={() => setShowDeadlinePicker(false)}
+            <Text style={styles.inputLabel}>Taak</Text>
+            <TextInput
+              placeholder="Bijvoorbeeld: Deadline indienen"
+              placeholderTextColor="#94A3B8"
+              value={taskTitle}
+              onChangeText={setTaskTitle}
+              style={styles.input}
+            />
+
+            <Text style={styles.inputLabel}>Deadline</Text>
+            <View style={styles.deadlineButtonsRow}>
+              <Pressable
+                style={styles.dateButton}
+                onPress={() => openDeadlinePicker("date")}
+              >
+                <Text style={styles.dateButtonLabel}>Datum</Text>
+                <Text style={styles.dateButtonText}>
+                  {deadlineDate || "Kies datum"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.dateButton}
+                onPress={() => openDeadlinePicker("time")}
+              >
+                <Text style={styles.dateButtonLabel}>Uur</Text>
+                <Text style={styles.dateButtonText}>
+                  {deadlineTime || "Kies uur"}
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text style={styles.deadlinePreview}>{deadlinePreview}</Text>
+
+            {showDeadlinePicker ? (
+              <View style={styles.pickerWrap}>
+                <DateTimePicker
+                  value={parseDeadlinePickerValue()}
+                  mode={deadlinePickerMode}
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={(_, selectedDate) => {
+                    if (selectedDate) {
+                      if (deadlinePickerMode === "date") {
+                        setDeadlineDate(formatDeadlineDate(selectedDate));
+                      } else {
+                        setDeadlineTime(formatDeadlineTime(selectedDate));
+                      }
+                    }
+
+                    if (Platform.OS !== "ios") {
+                      setShowDeadlinePicker(false);
+                    }
+                  }}
+                />
+
+                {Platform.OS === "ios" ? (
+                  <Pressable
+                    style={styles.pickerDoneButton}
+                    onPress={() => setShowDeadlinePicker(false)}
+                  >
+                    <Text style={styles.pickerDoneButtonText}>Klaar</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+
+            <View style={styles.toggleRow}>
+              <Text style={styles.toggleLabel}>Afgewerkt</Text>
+              <Pressable
+                style={[
+                  styles.toggleChip,
+                  isCompleted && styles.toggleChipActive,
+                ]}
+                onPress={handleToggleCompleted}
+              >
+                <Text
+                  style={[
+                    styles.toggleChipText,
+                    isCompleted && styles.toggleChipTextActive,
+                  ]}
                 >
-                  <Text style={styles.pickerDoneButtonText}>Klaar</Text>
+                  {isCompleted ? "Ja" : "Nee"}
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text style={styles.label}>Kies een vak</Text>
+
+            <View style={styles.subjectList}>
+              {subjects.map((subject) => {
+                const isSelected = selectedSubjectId === subject.id;
+
+                return (
+                  <Pressable
+                    key={subject.id}
+                    style={[
+                      styles.subjectButton,
+                      isSelected && styles.subjectButtonActive,
+                    ]}
+                    onPress={() => setSelectedSubjectId(subject.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.subjectButtonText,
+                        isSelected && styles.subjectButtonTextActive,
+                      ]}
+                    >
+                      {subject.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <View style={styles.actionRow}>
+              <Pressable
+                style={styles.inlineSaveButton}
+                onPress={async () => {
+                  await handleSaveTask();
+                  setIsModalOpen(false);
+                }}
+              >
+                <Text style={styles.buttonText}>
+                  {editingTaskId ? "Opslaan" : "Toevoegen"}
+                </Text>
+              </Pressable>
+
+              {editingTaskId ? (
+                <Pressable
+                  style={styles.inlineDeleteButton}
+                  onPress={() =>
+                    Alert.alert(
+                      "Bevestigen",
+                      "Weet je zeker dat je deze taak wilt verwijderen?",
+                      [
+                        { text: "Annuleren", style: "cancel" },
+                        {
+                          text: "Verwijderen",
+                          style: "destructive",
+                          onPress: handleDeleteCurrentTask,
+                        },
+                      ],
+                    )
+                  }
+                >
+                  <Text style={styles.deleteModalButtonText}>Verwijderen</Text>
                 </Pressable>
               ) : null}
             </View>
-          ) : null}
-
-          <View style={styles.toggleRow}>
-            <Text style={styles.toggleLabel}>Afgewerkt</Text>
-            <Pressable
-              style={[
-                styles.toggleChip,
-                isCompleted && styles.toggleChipActive,
-              ]}
-              onPress={handleToggleCompleted}
-            >
-              <Text
-                style={[
-                  styles.toggleChipText,
-                  isCompleted && styles.toggleChipTextActive,
-                ]}
-              >
-                {isCompleted ? "Ja" : "Nee"}
-              </Text>
-            </Pressable>
-          </View>
-
-          <Text style={styles.label}>Kies een vak</Text>
-
-          <View style={styles.subjectList}>
-            {subjects.map((subject) => {
-              const isSelected = selectedSubjectId === subject.id;
-
-              return (
-                <Pressable
-                  key={subject.id}
-                  style={[
-                    styles.subjectButton,
-                    isSelected && styles.subjectButtonActive,
-                  ]}
-                  onPress={() => setSelectedSubjectId(subject.id)}
-                >
-                  <Text
-                    style={[
-                      styles.subjectButtonText,
-                      isSelected && styles.subjectButtonTextActive,
-                    ]}
-                  >
-                    {subject.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <View style={styles.actionRow}>
-            <Pressable
-              style={styles.inlineSaveButton}
-              onPress={async () => {
-                await handleSaveTask();
-                setIsModalOpen(false);
-              }}
-            >
-              <Text style={styles.buttonText}>
-                {editingTaskId ? "Opslaan" : "Toevoegen"}
-              </Text>
-            </Pressable>
-
-            {editingTaskId ? (
-              <Pressable
-                style={styles.inlineDeleteButton}
-                onPress={() =>
-                  Alert.alert(
-                    "Bevestigen",
-                    "Weet je zeker dat je deze taak wilt verwijderen?",
-                    [
-                      { text: "Annuleren", style: "cancel" },
-                      {
-                        text: "Verwijderen",
-                        style: "destructive",
-                        onPress: handleDeleteCurrentTask,
-                      },
-                    ],
-                  )
-                }
-              >
-                <Text style={styles.deleteModalButtonText}>Verwijderen</Text>
-              </Pressable>
-            ) : null}
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -433,105 +435,6 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     letterSpacing: -0.6,
     alignSelf: "flex-start",
-  },
-  input: {
-    width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    marginBottom: 16,
-    fontSize: 15,
-    color: "#0F172A",
-  },
-  deadlineButtonsRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  dateButton: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    marginBottom: 16,
-  },
-  dateButtonLabel: {
-    color: "#64748B",
-    fontSize: 12,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  dateButtonText: {
-    color: "#0F172A",
-    fontSize: 15,
-    fontWeight: "500",
-  },
-  deadlinePreview: {
-    color: "#334155",
-    fontSize: 13,
-    fontWeight: "600",
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#334155",
-    marginBottom: 12,
-  },
-  subjectList: {
-    width: "100%",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 20,
-  },
-  subjectButton: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-  },
-  subjectButtonActive: {
-    backgroundColor: "#DBEAFE",
-    borderColor: "#2563EB",
-  },
-  subjectButtonText: {
-    color: "#475569",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  subjectButtonTextActive: {
-    color: "#1D4ED8",
-  },
-  button: {
-    backgroundColor: "#2563EB",
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#2563EB",
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.22,
-    shadowRadius: 16,
-    elevation: 5,
-    marginBottom: 24,
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-    fontSize: 15,
-    letterSpacing: 0.2,
   },
   primaryButton: {
     backgroundColor: "#0F172A",
@@ -571,6 +474,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 4,
   },
+  taskTitleCompleted: {
+    textDecorationLine: "line-through",
+    color: "#94A3B8",
+  },
   taskSubject: {
     color: "#64748B",
     fontSize: 13,
@@ -582,38 +489,45 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 4,
   },
-  taskTitleCompleted: {
-    textDecorationLine: "line-through",
-    color: "#94A3B8",
-  },
-  sheetContent: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 32,
-  },
-  modalHandle: {
-    width: 44,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: "#CBD5F5",
+  emptyText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#64748B",
+    textAlign: "center",
   },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(2,6,23,0.5)",
+    backgroundColor: "rgba(15, 23, 42, 0.42)",
   },
   modalSheet: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    height: "90%",
-    backgroundColor: "#F8FAFC",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 32,
+    height: "96%",
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 22,
+    paddingTop: 6,
+    paddingBottom: 44,
+    shadowColor: "#0F172A",
+    shadowOffset: {
+      width: 0,
+      height: -8,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 18,
+  },
+  modalHandle: {
+    alignSelf: "center",
+    width: 46,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#CBD5E1",
+    marginBottom: 18,
   },
   modalHeader: {
     flexDirection: "row",
@@ -622,18 +536,24 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "800",
     color: "#0F172A",
+    letterSpacing: -0.4,
   },
   modalClose: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    minHeight: 36,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: "#E2E8F0",
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalCloseText: {
-    color: "#0F172A",
+    color: "#334155",
     fontWeight: "700",
     fontSize: 12,
   },
@@ -642,25 +562,111 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#334155",
     marginBottom: 8,
+    marginLeft: 2,
+  },
+  input: {
+    width: "100%",
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    marginBottom: 18,
+    fontSize: 15,
+    color: "#0F172A",
+  },
+  deadlineButtonsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 10,
+  },
+  dateButton: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+  },
+  dateButtonLabel: {
+    color: "#64748B",
+    fontSize: 11,
+    fontWeight: "700",
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  dateButtonText: {
+    color: "#0F172A",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  deadlinePreview: {
+    color: "#475569",
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 18,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#334155",
+    marginBottom: 12,
+  },
+  subjectList: {
+    width: "100%",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 20,
+  },
+  subjectButton: {
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+  },
+  subjectButtonActive: {
+    backgroundColor: "#DBEAFE",
+    borderColor: "#2563EB",
+  },
+  subjectButtonText: {
+    color: "#475569",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  subjectButtonTextActive: {
+    color: "#1D4ED8",
   },
   toggleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 18,
+    marginBottom: 20,
+    paddingVertical: 4,
   },
   toggleLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
     color: "#334155",
   },
   toggleChip: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
+    minWidth: 64,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
     borderColor: "#E2E8F0",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
     borderRadius: 999,
+    alignItems: "center",
   },
   toggleChipActive: {
     backgroundColor: "#DCFCE7",
@@ -675,39 +681,24 @@ const styles = StyleSheet.create({
     color: "#166534",
   },
   pickerWrap: {
-    marginBottom: 16,
+    marginBottom: 18,
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    borderRadius: 14,
+    borderRadius: 18,
     backgroundColor: "#FFFFFF",
     overflow: "hidden",
   },
   pickerDoneButton: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: "center",
     borderTopWidth: 1,
     borderTopColor: "#E2E8F0",
     backgroundColor: "#F8FAFC",
   },
   pickerDoneButtonText: {
-    color: "#1D4ED8",
+    color: "#2563EB",
     fontWeight: "700",
     fontSize: 14,
-  },
-  deleteModalButton: {
-    marginTop: 12,
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FEF2F2",
-    borderWidth: 1,
-    borderColor: "#FECACA",
-  },
-  deleteModalButtonText: {
-    color: "#DC2626",
-    fontWeight: "700",
-    fontSize: 15,
   },
   actionRow: {
     flexDirection: "row",
@@ -715,6 +706,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
     marginBottom: 12,
+  },
+  sheetContent: {
+    flexGrow: 1,
+    justifyContent: "space-between",
+    paddingBottom: 24,
   },
   inlineSaveButton: {
     flex: 1,
@@ -724,11 +720,17 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 8,
+    shadowColor: "#2563EB",
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.24,
+    shadowRadius: 12,
+    elevation: 6,
   },
   inlineDeleteButton: {
     flex: 1,
-    marginLeft: 8,
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",
@@ -737,10 +739,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#FECACA",
   },
-  emptyText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: "#64748B",
-    textAlign: "center",
+  buttonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 15,
+    letterSpacing: 0.2,
+  },
+  deleteModalButtonText: {
+    color: "#DC2626",
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
