@@ -26,6 +26,7 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Subject } from "../types";
+import ScreenHeaderAction from "../components/ScreenHeaderAction";
 
 const subjectSchema = Yup.object({
   name: Yup.string().required("hmm vul eens een naam in!"),
@@ -98,15 +99,11 @@ export default function Subjects() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Vakken</Text>
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => setIsModalOpen(true)}
-        >
-          <Text style={styles.primaryButtonText}>Vak toevoegen</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeaderAction
+        title="Vakken"
+        actionLabel="Vak toevoegen"
+        onPressAction={() => setIsModalOpen(true)}
+      />
 
       <FlatList
         data={subjects}

@@ -14,6 +14,7 @@ import { StyleSheet } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AuthHeader from "../../components/AuthHeader";
 
 const loginSchema = Yup.object({
   email: Yup.string()
@@ -64,12 +65,10 @@ export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
               isSubmitting,
             }) => (
               <View style={styles.wrapper}>
-                <View style={styles.headerSection}>
-                  <Text style={styles.mainTitle}>Deadline Radar</Text>
-                  <Text style={styles.tagline}>
-                    Beheer je deadlines met gemak
-                  </Text>
-                </View>
+                <AuthHeader
+                  title="Deadline Radar"
+                  subtitle="Beheer je deadlines met gemak"
+                />
 
                 <View style={styles.formSection}>
                   <Text style={styles.formTitle}>Welkom terug</Text>

@@ -25,6 +25,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../Firestore/FirebaseConfig";
 import { Subject, Task } from "../types";
+import ScreenHeaderAction from "../components/ScreenHeaderAction";
 
 export default function Tasks() {
   const [taskTitle, setTaskTitle] = useState("");
@@ -187,12 +188,11 @@ export default function Tasks() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Taken</Text>
-        <Pressable style={styles.primaryButton} onPress={openAddModal}>
-          <Text style={styles.primaryButtonText}>Taak toevoegen</Text>
-        </Pressable>
-      </View>
+      <ScreenHeaderAction
+        title="Taken"
+        actionLabel="Taak toevoegen"
+        onPressAction={openAddModal}
+      />
 
       <FlatList
         data={tasks}

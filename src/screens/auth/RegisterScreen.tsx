@@ -14,6 +14,7 @@ import { auth } from "../../Firestore/FirebaseConfig";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AuthHeader from "../../components/AuthHeader";
 
 const registerSchema = Yup.object({
   email: Yup.string()
@@ -67,13 +68,10 @@ export default function RegisterScreen({ navigation }: any) {
               isSubmitting,
             }) => (
               <View style={styles.wrapper}>
-                <View style={styles.headerSection}>
-                  <Text style={styles.mainTitle}>Deadline Radar</Text>
-
-                  <Text style={styles.tagline}>
-                    Maak een account aan om te starten
-                  </Text>
-                </View>
+                <AuthHeader
+                  title="Deadline Radar"
+                  subtitle="Maak een account aan om te starten"
+                />
 
                 <View style={styles.formSection}>
                   <Text style={styles.formTitle}>Registreren</Text>
