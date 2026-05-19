@@ -1,18 +1,6 @@
-import {
-  View,
-  Text,
-  TextInput,
-  Alert,
-  StyleSheet,
-  FlatList,
-  Modal,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   addDoc,
   collection,
@@ -26,6 +14,8 @@ import {
 import { auth, db } from "../Firestore/FirebaseConfig";
 import { Subject, Task } from "../types";
 import ScreenHeaderAction from "../components/ScreenHeaderAction";
+import TaskListItem from "../components/TaskListItem";
+import TaskModal from "../components/TaskModal";
 
 export default function Tasks() {
   const [taskTitle, setTaskTitle] = useState("");
@@ -114,6 +104,11 @@ export default function Tasks() {
     setIsModalOpen(true);
   };
 
+  const closeTaskModal = () => {
+    setIsModalOpen(false);
+    resetForm();
+  };
+
   const handleSaveTask = async () => {
     if (!taskTitle.trim()) return;
     if (!auth.currentUser) return;
@@ -181,6 +176,20 @@ export default function Tasks() {
     setShowDeadlinePicker(true);
   };
 
+  const handleDeadlinePickerChange = (date: Date) => {
+    if (deadlinePickerMode === "date") {
+      setDeadlineDate(formatDeadlineDate(date));
+    } else {
+      setDeadlineTime(formatDeadlineTime(date));
+    }
+  };
+
+  const handleDeadlinePickerDone = () => {
+    setShowDeadlinePicker(false);
+  };
+
+  const deadlinePickerValue = parseDeadlinePickerValue();
+
   const deadlinePreview =
     deadlineDate && deadlineTime
       ? `${deadlineDate} ${deadlineTime}`
@@ -203,26 +212,11 @@ export default function Tasks() {
           const subject = subjects.find((s) => s.id === item.subjectId);
 
           return (
-            <Pressable style={styles.item} onPress={() => openEditModal(item)}>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={[
-                    styles.taskTitle,
-                    item.completed && styles.taskTitleCompleted,
-                  ]}
-                >
-                  {item.title}
-                </Text>
-                <Text style={styles.taskSubject}>
-                  {subject?.name || "Geen vak"}
-                </Text>
-                {item.deadline ? (
-                  <Text style={styles.taskDeadline}>
-                    Deadline: {item.deadline}
-                  </Text>
-                ) : null}
-              </View>
-            </Pressable>
+            <TaskListItem
+              task={item}
+              subjectName={subject?.name || "Geen vak"}
+              onPress={() => openEditModal(item)}
+            />
           );
         }}
         ListEmptyComponent={
@@ -230,189 +224,32 @@ export default function Tasks() {
         }
       />
 
-      <Modal
+      <TaskModal
         visible={isModalOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setIsModalOpen(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setIsModalOpen(false)}
-        />
-        <KeyboardAvoidingView
-          style={styles.modalSheet}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <View style={styles.modalHandle} />
-          <View style={styles.sheetContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {editingTaskId ? "Taak bewerken" : "Nieuwe taak"}
-              </Text>
-              <Pressable
-                style={styles.modalClose}
-                onPress={() => {
-                  setIsModalOpen(false);
-                  resetForm();
-                }}
-              >
-                <Text style={styles.modalCloseText}>Sluiten</Text>
-              </Pressable>
-            </View>
-
-            <Text style={styles.inputLabel}>Taak</Text>
-            <TextInput
-              placeholder="Bijvoorbeeld: Deadline indienen"
-              placeholderTextColor="#94A3B8"
-              value={taskTitle}
-              onChangeText={setTaskTitle}
-              style={styles.input}
-            />
-
-            <Text style={styles.inputLabel}>Deadline</Text>
-            <View style={styles.deadlineButtonsRow}>
-              <Pressable
-                style={styles.dateButton}
-                onPress={() => openDeadlinePicker("date")}
-              >
-                <Text style={styles.dateButtonLabel}>Datum</Text>
-                <Text style={styles.dateButtonText}>
-                  {deadlineDate || "Kies datum"}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                style={styles.dateButton}
-                onPress={() => openDeadlinePicker("time")}
-              >
-                <Text style={styles.dateButtonLabel}>Uur</Text>
-                <Text style={styles.dateButtonText}>
-                  {deadlineTime || "Kies uur"}
-                </Text>
-              </Pressable>
-            </View>
-
-            <Text style={styles.deadlinePreview}>{deadlinePreview}</Text>
-
-            {showDeadlinePicker ? (
-              <View style={styles.pickerWrap}>
-                <DateTimePicker
-                  value={parseDeadlinePickerValue()}
-                  mode={deadlinePickerMode}
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  onChange={(_, selectedDate) => {
-                    if (selectedDate) {
-                      if (deadlinePickerMode === "date") {
-                        setDeadlineDate(formatDeadlineDate(selectedDate));
-                      } else {
-                        setDeadlineTime(formatDeadlineTime(selectedDate));
-                      }
-                    }
-
-                    if (Platform.OS !== "ios") {
-                      setShowDeadlinePicker(false);
-                    }
-                  }}
-                />
-
-                {Platform.OS === "ios" ? (
-                  <Pressable
-                    style={styles.pickerDoneButton}
-                    onPress={() => setShowDeadlinePicker(false)}
-                  >
-                    <Text style={styles.pickerDoneButtonText}>Klaar</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            ) : null}
-
-            <View style={styles.toggleRow}>
-              <Text style={styles.toggleLabel}>Afgewerkt</Text>
-              <Pressable
-                style={[
-                  styles.toggleChip,
-                  isCompleted && styles.toggleChipActive,
-                ]}
-                onPress={handleToggleCompleted}
-              >
-                <Text
-                  style={[
-                    styles.toggleChipText,
-                    isCompleted && styles.toggleChipTextActive,
-                  ]}
-                >
-                  {isCompleted ? "Ja" : "Nee"}
-                </Text>
-              </Pressable>
-            </View>
-
-            <Text style={styles.label}>Kies een vak</Text>
-
-            <View style={styles.subjectList}>
-              {subjects.map((subject) => {
-                const isSelected = selectedSubjectId === subject.id;
-
-                return (
-                  <Pressable
-                    key={subject.id}
-                    style={[
-                      styles.subjectButton,
-                      isSelected && styles.subjectButtonActive,
-                    ]}
-                    onPress={() => setSelectedSubjectId(subject.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.subjectButtonText,
-                        isSelected && styles.subjectButtonTextActive,
-                      ]}
-                    >
-                      {subject.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <View style={styles.actionRow}>
-              <Pressable
-                style={styles.inlineSaveButton}
-                onPress={async () => {
-                  await handleSaveTask();
-                  setIsModalOpen(false);
-                }}
-              >
-                <Text style={styles.buttonText}>
-                  {editingTaskId ? "Opslaan" : "Toevoegen"}
-                </Text>
-              </Pressable>
-
-              {editingTaskId ? (
-                <Pressable
-                  style={styles.inlineDeleteButton}
-                  onPress={() =>
-                    Alert.alert(
-                      "Bevestigen",
-                      "Weet je zeker dat je deze taak wilt verwijderen?",
-                      [
-                        { text: "Annuleren", style: "cancel" },
-                        {
-                          text: "Verwijderen",
-                          style: "destructive",
-                          onPress: handleDeleteCurrentTask,
-                        },
-                      ],
-                    )
-                  }
-                >
-                  <Text style={styles.deleteModalButtonText}>Verwijderen</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        editingTaskId={editingTaskId}
+        taskTitle={taskTitle}
+        onTaskTitleChange={setTaskTitle}
+        deadlineDate={deadlineDate}
+        deadlineTime={deadlineTime}
+        deadlinePreview={deadlinePreview}
+        showDeadlinePicker={showDeadlinePicker}
+        deadlinePickerMode={deadlinePickerMode}
+        openDeadlinePicker={openDeadlinePicker}
+        deadlinePickerValue={deadlinePickerValue}
+        onDeadlinePickerChange={handleDeadlinePickerChange}
+        onDeadlinePickerDone={handleDeadlinePickerDone}
+        isCompleted={isCompleted}
+        onToggleCompleted={handleToggleCompleted}
+        subjects={subjects}
+        selectedSubjectId={selectedSubjectId}
+        onSelectSubject={setSelectedSubjectId}
+        onSavePress={async () => {
+          await handleSaveTask();
+          closeTaskModal();
+        }}
+        onDeletePress={handleDeleteCurrentTask}
+        onClose={closeTaskModal}
+      />
     </SafeAreaView>
   );
 }
