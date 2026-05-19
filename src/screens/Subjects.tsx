@@ -1,103 +1,23 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-} from "react-native";
-import { Modal, Pressable, KeyboardAvoidingView, Platform } from "react-native";
+import { View, StyleSheet, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  addDoc,
-  collection,
-  FirestoreDataConverter,
-  getDocs,
-  QueryDocumentSnapshot,
-  onSnapshot,
-  query,
-  where,
-  deleteDoc,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
-import { db, auth } from "../Firestore/FirebaseConfig";
-import { Formik } from "formik";
-import * as Yup from "yup";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Subject } from "../types";
 import ScreenHeaderAction from "../components/ScreenHeaderAction";
 import SubjectListItem from "../components/SubjectListItem";
 import SubjectModal from "../components/SubjectModal";
-
-const subjectSchema = Yup.object({
-  name: Yup.string().required("hmm vul eens een naam in!"),
-});
-
-const subjectConverter: FirestoreDataConverter<Subject> = {
-  toFirestore: (subject) => {
-    const { id, ...data } = subject;
-    return data;
-  },
-  fromFirestore: (snapshot: QueryDocumentSnapshot) => {
-    const data = snapshot.data();
-    return { id: snapshot.id, ...data } as Subject;
-  },
-};
+import useSubjects from "../hooks/useSubjects";
 
 export default function Subjects() {
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [editText, setEditText] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const handleAddSubject = async (name: string) => {
-    if (!name.trim()) return;
-    if (!auth.currentUser) return;
-    try {
-      await addDoc(collection(db, "subjects"), {
-        name,
-        userId: auth.currentUser.uid,
-      });
-    } catch (error) {
-      console.error("Fout bij toevoegen van vak: ", error);
-    }
-  };
-
-  const handleDeleteSubject = async (id: string) => {
-    if (!auth.currentUser) return;
-    try {
-      await deleteDoc(doc(db, "subjects", id));
-    } catch (error) {
-      console.error("Fout bij verwijderen:", error);
-    }
-  };
-  const handleEditSubject = async (id: string, newName: string) => {
-    if (!auth.currentUser) return;
-    try {
-      await updateDoc(doc(db, "subjects", id), {
-        name: newName,
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    if (!auth.currentUser) return;
-
-    const dbRef = query(
-      collection(db, "subjects").withConverter(subjectConverter),
-      where("userId", "==", auth.currentUser.uid),
-    );
-
-    const unsubscribe = onSnapshot(dbRef, (qs) => {
-      let receivedSubjects: Subject[] = qs.docs.map((doc) => doc.data());
-
-      setSubjects(receivedSubjects);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const {
+    subjects,
+    editText,
+    editingId,
+    isModalOpen,
+    setIsModalOpen,
+    setEditText,
+    handleAddSubject,
+    handleDeleteSubject,
+    handleStartEdit,
+    handleSaveEdit,
+  } = useSubjects();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -119,18 +39,8 @@ export default function Subjects() {
               isEditing={isEditing}
               editText={editText}
               onEditTextChange={setEditText}
-              onToggleEdit={() => {
-                setEditingId(item.id);
-                setEditText(item.name);
-              }}
-              onSaveEdit={async () => {
-                await updateDoc(doc(db, "subjects", item.id), {
-                  name: editText,
-                });
-
-                setEditingId(null);
-                setEditText("");
-              }}
+              onToggleEdit={() => handleStartEdit(item)}
+              onSaveEdit={async () => handleSaveEdit(item.id)}
               onDelete={() => handleDeleteSubject(item.id)}
             />
           );
